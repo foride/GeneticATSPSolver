@@ -2,7 +2,9 @@
 #define GENETICATSPSOLVER_GENETICALGORITHM_H
 
 #include "MatrixATSP.h"
+#include <vector>
 #include <random>
+#include <chrono>
 
 class GeneticAlgorithm
 {
@@ -18,7 +20,6 @@ private:
     int theShortestRouteValue = 9999;
     std::vector<int> theShortestRoute;
 
-
     void initRoute();
     int calculateRouteLength(int * route);
     void setRandomRoute(int * route);
@@ -27,7 +28,8 @@ private:
     void copyPopulation(int** from, int** to, int * selectedParents, int populationSize);
     void copyPopulationIntact(int ** from, int ** to, int populationSize);
     void selectByRoulette(int * grades, int * selection, int populationSize);
-    void mutate(int * route);
+    void mutate(int * route, int mutationType);
+    void insertElements(int * route, int i, int j);
     void swapElements(int * route, int i, int j);
     void crossOnePoint(int * routeA, int * routeB);
     int findInArray(int * array, int number);
@@ -39,10 +41,8 @@ public:
 
     void printTheShortestRoute();
     int getShortestRouteValue();
-    std::vector<int> getShortestRoute();
 
-
-    void solve(int populationSize, double crossProb, double mutProb, int iterations = -1);
+    void solve(int populationSize, double crossProb, double mutProb, int iterations = -1, double timeLimit = -1.0, int mutationType = 0);
 };
 
 #endif //GENETICATSPSOLVER_GENETICALGORITHM_H

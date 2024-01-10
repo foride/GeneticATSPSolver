@@ -4,8 +4,9 @@ void Menu::startMenu() {
 
     std::cout << "Traveling Salesman Problem solved using a genetic algorithm.\nAuthor: Michal Lewandowski #264458\n";
     std::cout << "Program Menu:\n";
-    int option;
+    int option = 0;
     do {
+
         std::cout << "1. Load data from a file\n";
         std::cout << "2. Set the stopping criterion\n";
         std::cout << "3. Set the initial population size\n";
@@ -29,8 +30,21 @@ void Menu::startMenu() {
                 break;
             }
             case 2: {
-                std::cout << "Set the stopping criterion: (number of algorithm iterations)";
+                std::cout << "Set the stopping criterion: (number of algorithm iterations)\n";
+                std::cout << "0 - number of the algorithm iterations\n";
+                std::cout << "1 - time limit set in seconds\n";
                 std::cin >> stopCriterion;
+                if (stopCriterion == 0) {
+                    std::cout << "Enter number of the algorithm iterations: ";
+                    std::cin >> numberOfIterations;
+
+                } else if (stopCriterion == 1) {
+                    std::cout << "Enter time limit in seconds: ";
+                    std::cin >> timeLimit;
+
+                } else {
+                    std::cout << "Invalid input, enter 0 or 1\n";
+                }
                 break;
             }
             case 3: {
@@ -49,23 +63,46 @@ void Menu::startMenu() {
                 break;
             }
             case 6: {
-                std::cout << "Choose a mutation method (1, 2, 3, etc.): ";
+                std::cout << "Choose a mutation method:\n";
+                std::cout << "0 - swap method\n";
+                std::cout << "1 - insert method\n";
                 std::cin >> mutationMethod;
+                if (mutationMethod != 0 && mutationMethod != 1) {
+                    std::cout << "Invalid input, enter 0 or 1\n";
+
+                }
                 break;
             }
             case 7: {
-                GeneticAlgorithm ga(matrixVector, rng);
-                // To finish - needs mutation method and stop criterion
-                ga.solve(initialPopulationSize, crossoverRate, mutationRate, stopCriterion);
-                ga.printTheShortestRoute();
-                std::cout << std::to_string(ga.getShortestRouteValue()) << "\n";
+                if (matrixVector.empty()) {
+                    std::cout << "Please load data from a file first (Option 1)\n";
+                } else {
+                    GeneticAlgorithm ga(matrixVector, rng);
+
+                    if (mutationMethod != 0 && mutationMethod != 1) {
+                        std::cout << "Please set a valid mutation method (Option 6)\n";
+                    } else if (stopCriterion != 0 && stopCriterion != 1) {
+                        std::cout << "Please set a valid stopping criterion (Option 2)\n";
+                    } else {
+                        ga.solve(initialPopulationSize, crossoverRate, mutationRate,
+                                 numberOfIterations, timeLimit,  mutationMethod);
+                        ga.printTheShortestRoute();
+                        std::cout << "Koszt ścieżki: " << std::to_string(ga.getShortestRouteValue()) << "\n";
+                    }
+                }
+                break;
             }
-            case 8:
+            case 8: {
                 std::cout << "Exiting the program.\n";
                 break;
-            default:
+            }
+
+            default: {
+
                 std::cout << "Invalid option. Please try again.\n";
                 break;
+            }
+
         }
     } while (option != 8);
 }

@@ -11,7 +11,8 @@ class PerformanceTest {
 
 public:
     PerformanceTest(std::vector<std::vector<int>> matrix, std::mt19937 rng);
-    long long performTest(int iterations, int populationSize, double crossoverRate, double mutationRate);
+    int performTest(int iterations, int populationSize, double crossoverRate, double mutationRate,
+                          double timeLimit, int mutationMethod);
 
 
 private:

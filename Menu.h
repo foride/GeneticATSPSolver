@@ -12,10 +12,13 @@ public:
 private:
     std::vector<std::vector<int>> matrixVector;
     int stopCriterion;
+    int numberOfIterations = -1;
+    double timeLimit = -1;
     int initialPopulationSize;
     double mutationRate;
     double crossoverRate;
     int mutationMethod;
+
 };
 
 

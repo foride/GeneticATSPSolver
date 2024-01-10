@@ -15,3 +15,5 @@ add_executable(GeneticATSPSolver
         Menu.cpp
         PerformanceTest.h
         PerformanceTest.cpp)
+
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libstdc++ -static-libgcc")

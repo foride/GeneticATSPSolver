@@ -1,6 +1,4 @@
 #include "GeneticAlgorithm.h"
-#include <vector>
-#include <random>
 
 GeneticAlgorithm::GeneticAlgorithm(const std::vector<std::vector<int>>& graph, std::mt19937 rng): rng(rng) {
     this->graph = graph;
@@ -14,9 +12,6 @@ GeneticAlgorithm::~GeneticAlgorithm()
     }
 }
 
-// *********************************************************************************************
-// Initializes shortestRoute and shortestRouteValue using greedy approach treating startNode as 0
-// *********************************************************************************************
 void GeneticAlgorithm::initRoute()
 {
     if (localShortestRoute != nullptr) {
@@ -48,9 +43,6 @@ void GeneticAlgorithm::initRoute()
     localShortestRouteValue = calculateRouteLength(localShortestRoute);
 }
 
-// *********************************************************************************************
-// Calculates length of a given route
-// *********************************************************************************************
 int GeneticAlgorithm::calculateRouteLength(int * route)
 {
     int length = 0;
@@ -60,9 +52,6 @@ int GeneticAlgorithm::calculateRouteLength(int * route)
     return length;
 }
 
-// *********************************************************************************************
-// Sets random route at given pointer
-// *********************************************************************************************
 void GeneticAlgorithm::setRandomRoute(int * route)
 {
     std::vector<int> possibleCities;
@@ -79,17 +68,11 @@ void GeneticAlgorithm::setRandomRoute(int * route)
     }
 }
 
-// *********************************************************************************************
-// Returns grade of a given route -> the higher, the better
-// *********************************************************************************************
 int GeneticAlgorithm::gradeRoute(int * route)
 {
     return localShortestRouteValue - calculateRouteLength(route);
 }
 
-// *********************************************************************************************
-// Normalize grades to be greater than zero
-// *********************************************************************************************
 void GeneticAlgorithm::normalizeGrades(int * grades, int populationSize) {
     int min = 0;
     for (int i = 0; i < populationSize; i++) {
@@ -104,9 +87,6 @@ void GeneticAlgorithm::normalizeGrades(int * grades, int populationSize) {
     }
 }
 
-// *********************************************************************************************
-// Copies one population into another based on selected parents
-// *********************************************************************************************
 void GeneticAlgorithm::copyPopulation(int ** from, int ** to, int * selectedParents, int populationSize)
 
 {
@@ -117,9 +97,6 @@ void GeneticAlgorithm::copyPopulation(int ** from, int ** to, int * selectedPare
     }
 }
 
-// *********************************************************************************************
-// Copies one population into another intact
-// *********************************************************************************************
 void GeneticAlgorithm::copyPopulationIntact(int ** from, int ** to, int populationSize)
 
 {
@@ -130,9 +107,6 @@ void GeneticAlgorithm::copyPopulationIntact(int ** from, int ** to, int populati
     }
 }
 
-// *********************************************************************************************
-// Selects parents into selection based on roulette method using grades
-// *********************************************************************************************
 void GeneticAlgorithm::selectByRoulette(int * grades, int * selection, int populationSize)
 
 {
@@ -154,10 +128,7 @@ void GeneticAlgorithm::selectByRoulette(int * grades, int * selection, int popul
     }
 }
 
-// *********************************************************************************************
-// Mutates given route by swapping two different points
-// *********************************************************************************************
-void GeneticAlgorithm::mutate(int * route)
+void GeneticAlgorithm::mutate(int * route, int mutationType)
 {
     int pointA = 0;
     int pointB = 0;
@@ -166,12 +137,13 @@ void GeneticAlgorithm::mutate(int * route)
         pointA = popDist(rng);
         pointB = popDist(rng);
     }
-    swapElements(route, pointA, pointB);
+    if (mutationType == 0) {
+        swapElements(route, pointA, pointB);
+    } else {
+        insertElements(route, pointA, pointB);
+    }
 }
 
-// *********************************************************************************************
-// Swaps two elements in an array
-// *********************************************************************************************
 void GeneticAlgorithm::swapElements(int * route, int i, int j)
 {
     int temp = route[i];
@@ -179,9 +151,26 @@ void GeneticAlgorithm::swapElements(int * route, int i, int j)
     route[j] = temp;
 }
 
-// *********************************************************************************************
-// Crosses two populations w/ one crossing point - PMX: Partially - Mapped Crossover
-// *********************************************************************************************
+void GeneticAlgorithm::insertElements(int *route, int i, int j) {
+
+    if (i == j) return;
+
+    int temp = route[i];
+    if (i < j) {
+        // Shift elements between i and j to the left
+        for (int k = i; k < j; k++) {
+            route[k] = route[k + 1];
+        }
+    } else {
+        // Shift elements between j and i to the right
+        for (int k = i; k > j; k--) {
+            route[k] = route[k - 1];
+        }
+    }
+    route[j] = temp;
+
+}
+
 void GeneticAlgorithm::crossOnePoint(int * routeA, int * routeB)
 {
     // Create temp routes
@@ -210,9 +199,6 @@ void GeneticAlgorithm::crossOnePoint(int * routeA, int * routeB)
     delete[] tempRouteB;
 }
 
-// *********************************************************************************************
-// Find given number in an array - return its position
-// *********************************************************************************************
 int GeneticAlgorithm::findInArray(int * array, int number)
 {
     for (int i = 0; i < graph_size; i++) {
@@ -223,9 +209,6 @@ int GeneticAlgorithm::findInArray(int * array, int number)
     return -1;
 }
 
-// *********************************************************************************************
-// Copies one route into another
-// *********************************************************************************************
 void GeneticAlgorithm::copyRoute(int * from, int * to)
 {
     for (int i = 0; i < graph_size; i++) {
@@ -233,19 +216,21 @@ void GeneticAlgorithm::copyRoute(int * from, int * to)
     }
 }
 
-void GeneticAlgorithm::solve(const int populationSize, const double crossProb, const double mutProb, int iterations)
+void GeneticAlgorithm::solve(const int populationSize, const double crossProb, const double mutProb, int iterations, double timeLimit, int mutationType)
 {
+
+    auto startTime = std::chrono::high_resolution_clock::now();
     if (graph.empty() || populationSize % 2 == 1) {
         return;
     }
-    // Init the shortest route/the shortest route value using greedy approach
+
     initRoute();
 
     if (iterations == -1) {
-        iterations = graph_size * graph_size * 2;
+        iterations = INT_MAX;
     }
 
-    // Init population
+
     int** population;
     population = new int*[populationSize];
     for (int i = 0; i < populationSize; i++) {
@@ -259,14 +244,12 @@ void GeneticAlgorithm::solve(const int populationSize, const double crossProb, c
     }
     int * selectedParents = new int[populationSize];
 
-    // Init grades
     int* grades = new int[populationSize];
     for (int j = 0; j < populationSize; j++) {
         grades[j] = gradeRoute(population[j]);
     }
     normalizeGrades(grades, populationSize);
 
-    // set current best solution as best
     int bestGrade = INT_MAX * (-1);
     int bestFromPop;
     for (int i = 0; i < populationSize; i++) {
@@ -278,17 +261,23 @@ void GeneticAlgorithm::solve(const int populationSize, const double crossProb, c
     copyRoute(population[bestFromPop], localShortestRoute);
     localShortestRouteValue = calculateRouteLength(population[bestFromPop]);
 
-    // Distribution for crossing/mutation prob
     std::uniform_real_distribution<double> happeningProb(0.0, 1.0);
 
     for (int i = 0; i < iterations; i++) {
-        // Selecting parents
+
+        if (timeLimit != -1.0) {
+            auto currentTime = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsedSeconds = currentTime - startTime;
+            if (elapsedSeconds.count() >= timeLimit) {
+                std::cout << timeLimit << " seconds exceeded. Stopping the algorithm.\n";
+                break;
+            }
+        }
+
         selectByRoulette(grades, selectedParents, populationSize);
 
-        // Create new population based on selected parents
         copyPopulation(population, newPopulation, selectedParents, populationSize);
 
-        // Crossing first / Mutating later
         for (int j = 0; j < populationSize/2; j++) {
             if (happeningProb(rng) <= crossProb) {
                 crossOnePoint(newPopulation[j * 2], newPopulation[(j * 2) + 1]);
@@ -296,20 +285,17 @@ void GeneticAlgorithm::solve(const int populationSize, const double crossProb, c
         }
         for (int j = 0; j < populationSize; j++) {
             if (happeningProb(rng) <= mutProb) {
-                mutate(newPopulation[j]);
+                mutate(newPopulation[j], mutationType);
             }
         }
 
-        // Grading new population
         for (int j = 0; j < populationSize; j++) {
             grades[j] = gradeRoute(newPopulation[j]);
         }
         normalizeGrades(grades, populationSize);
 
-        // Copy new population into population
         copyPopulationIntact(newPopulation, population, populationSize);
 
-        // set new best solution if found
         int bestGrade2 = INT_MAX * (-1);
         int bestFromPop2;
         for (int j = 0; j < populationSize; j++) {
@@ -321,7 +307,7 @@ void GeneticAlgorithm::solve(const int populationSize, const double crossProb, c
         if (calculateRouteLength(population[bestFromPop2]) < localShortestRouteValue) {
             copyRoute(population[bestFromPop2], localShortestRoute);
             localShortestRouteValue = calculateRouteLength(population[bestFromPop2]);
-            std::cout << i << " " << localShortestRouteValue << "\n";
+            // std::cout << i << " " << localShortestRouteValue << "\n";
         }
         if (theShortestRouteValue > localShortestRouteValue) {
             theShortestRouteValue = localShortestRouteValue;
@@ -330,10 +316,8 @@ void GeneticAlgorithm::solve(const int populationSize, const double crossProb, c
         }
     }
 
-
-    // Cleanup grades
     delete[] grades;
-    // Cleanup population
+
     for (int i = 0; i < populationSize; i++) {
         delete[] population[i];
     }
@@ -356,8 +340,4 @@ void GeneticAlgorithm::printTheShortestRoute() {
     }
     std::cout << theShortestRoute[0] << "\n";
     
-}
-
-std::vector<int> GeneticAlgorithm::getShortestRoute() {
-    return theShortestRoute;
 }
